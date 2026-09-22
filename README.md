@@ -26,11 +26,3 @@ Before running the notebook, create a folder named `dataset` in the project root
 ```text
 Road_Traffic_Fine_Management_Process.csv
 ```
-
-The complete expected path is:
-
-```text
-FilterBranchMap/dataset/Road_Traffic_Fine_Management_Process.csv
-```
-
-The filename and folder name must remain unchanged because the notebook expects the dataset at this location.
