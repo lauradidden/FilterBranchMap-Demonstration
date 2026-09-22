@@ -8,3 +8,7 @@ pm4py
 matplotlib
 plotly
 graphviz
+
+jupyterlab_widgets 
+widgetsnbextension
+tabulate
