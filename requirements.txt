@@ -1,0 +1,10 @@
+jupyterlab
+ipython
+ipywidgets
+
+pandas
+pm4py
+
+matplotlib
+plotly
+graphviz
