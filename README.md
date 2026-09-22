@@ -21,8 +21,4 @@
 
 The event-log dataset is not included in this repository because the file is too large to upload.
 
-Before running the notebook, create a folder named `dataset` in the project root and place the following file inside it:
-
-```text
-Road_Traffic_Fine_Management_Process.csv
-```
+Before running the notebook, create a folder named `dataset` in the project root and place the following file inside it: Road_Traffic_Fine_Management_Process.csv
