@@ -1,6 +1,8 @@
 jupyterlab
 ipython
 ipywidgets
+jupyterlab_widgets
+widgetsnbextension
 
 pandas
 pm4py
@@ -9,6 +11,6 @@ matplotlib
 plotly
 graphviz
 
-jupyterlab_widgets 
+jupyterlab_widgets
 widgetsnbextension
 tabulate
