@@ -488,13 +488,33 @@ def filterbranchmap(
         node_df, chart_node_cases, chart_node_paths = build_node_table(
             filter_order, chart_cases, metric_info
         )
+
+        # Calculate percentage relative to the immediate parent node.
+        parent_cases = node_df.set_index("node_id")["num_cases"]
+
+        node_df["parent_percentage"] = node_df.apply(
+            lambda row: (
+                100 * row["num_cases"] / parent_cases[row["parent_id"]]
+                if row["parent_id"] in parent_cases.index
+                and parent_cases[row["parent_id"]] > 0
+                else None
+            ),
+            axis=1,
+        )
+
+        # Build hover labels with case count, parent percentage,
+        # and the same metric value used for node coloring.
         node_df["hover_text"] = node_df.apply(
             lambda row: (
                 f"<b>{row['path']}</b><br>"
                 f"{int(row['num_cases']):,} cases<br>"
-                f"Cases with metric: {int(row['num_metric_cases']):,}<br>"
-                f"{metric_info['label']}: "
-                f"{format_value(metric_info, row['metric_value'])}"
+                + (
+                    f"{row['parent_percentage']:.1f}% of parent subset (number of cases)<br>"
+                    if pd.notna(row["parent_percentage"])
+                    else ""
+                )
+                + f"{metric_info['label']}: "
+                + f"{format_value(metric_info, row['metric_value'])}"
             ),
             axis=1,
         )
@@ -535,6 +555,73 @@ def filterbranchmap(
             width=1200,
             height=700,
         )
+
+        def on_chart_click(trace, points, selector):
+            if not points.point_inds:
+                return
+            node_id = str(trace.ids[points.point_inds[0]])
+            selected_ids = chart_node_cases.get(node_id, set())
+            subset = base_df.loc[base_df[case_col].isin(selected_ids)].copy()
+            path = " → ".join(chart_node_paths.get(node_id, []))
+            pending_selection.update(
+                {
+                    "data": subset,
+                    "case_ids": set(selected_ids),
+                    "path": path,
+                    "node_id": node_id,
+                    "filter_order": list(filter_order),
+                    "metric": dict(metric_info),
+                }
+            )
+            save_button.disabled = not allow_subset_saving
+            with preview_out:
+                clear_output(wait=True)
+                print(f"Selected node: {path}")
+                print(f"Chart metric: {metric_info['label']}")
+                print(f"{len(selected_ids):,} cases and {len(subset):,} events.")
+                display(subset.head(10))
+
+        fig.data[0].on_click(on_chart_click)
+
+        remove_button = widgets.Button(
+            description="Remove chart", button_style="danger", icon="trash"
+        )
+        card = widgets.VBox(
+            [
+                widgets.HTML(
+                    f"<b>Metric:</b> {metric_info['label']}<br>"
+                    f"<b>Aggregation:</b> {metric_info['aggregation']}<br>"
+                    f"<b>Filters:</b> {' → '.join(filter_order)}"
+                ),
+                remove_button,
+                fig,
+            ],
+            layout=widgets.Layout(
+                width="100%",
+                border="1px solid #dddddd",
+                padding="10px",
+                margin="0 0 15px 0",
+            ),
+        )
+
+        def remove_chart(_):
+            if card in visual_cards:
+                visual_cards.remove(card)
+                dashboard.children = tuple(visual_cards)
+
+        remove_button.on_click(remove_chart)
+        visual_cards.append(card)
+        dashboard.children = tuple(visual_cards)
+
+        with message_out:
+            clear_output(wait=True)
+            print(
+                f"Added chart {len(visual_cards)} | "
+                f"Metric: {metric_info['label']} | "
+                f"Filters: {' → '.join(filter_order)}"
+            )
+            if missing_count:
+                print(f"{missing_count:,} cases have no value for this metric.")
 
         def on_chart_click(trace, points, selector):
             if not points.point_inds:

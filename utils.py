@@ -4,21 +4,31 @@ from typing import Callable, Dict, Tuple, List
 CASE_ID_COL = "case:concept:name"
 
 def format_seconds(seconds: float) -> str:
-    """Format seconds into a readable string (Xd Yh Zm)."""
+    """Format seconds into a readable string (Xd Yh Zm Ws)."""
     if pd.isna(seconds):
         return "N/A"
-    seconds = int(seconds)
+
+    seconds = int(round(seconds))
+
     days, rem = divmod(seconds, 86400)
     hours, rem = divmod(rem, 3600)
-    minutes = rem // 60
+    minutes, seconds = divmod(rem, 60)
+
     parts = []
+
     if days:
         parts.append(f"{days}d")
+
     if hours:
         parts.append(f"{hours}h")
+
     if minutes:
         parts.append(f"{minutes}m")
-    return " ".join(parts) if parts else "0m"
+
+    if seconds or not parts:
+        parts.append(f"{seconds}s")
+
+    return " ".join(parts)
 
 
 def format_metric_value(metric: str, value: float) -> str:
@@ -60,9 +70,10 @@ METRIC_CONFIG = {
         "column": "case_duration",
         "enrich_fn": add_case_durations,
         "color_scheme": "Blues",
-        "label": "Avg Case Duration (s)",
+        "label": "Avg Case Duration",
         "is_time": True,
     },
+
     "avg_events_per_case": {
         "column": "num_events",
         "enrich_fn": add_event_counts,
@@ -70,11 +81,12 @@ METRIC_CONFIG = {
         "label": "Avg Events/Case",
         "is_time": False,
     },
+
     "avg_time_between_events": {
         "column": "avg_time_between_events",
         "enrich_fn": add_avg_time_between_events,
         "color_scheme": "Greens",
-        "label": "Avg Time Between Events (s)",
+        "label": "Avg Time Between Events",
         "is_time": True,
     },
 }
